@@ -45,13 +45,14 @@ def log_price_to_file(timestamp, price, data_dir="data"):
     filepath = os.path.join(data_dir, f"btc_prices_{hour_str}.csv")
 
     file_exists = os.path.isfile(filepath)
-    with open(filepath, mode="a", newline="") as f:
+    with open(filepath, mode="a", newline="") as f:  # <-- APPEND mode
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow(["timestamp", "price"])
         writer.writerow([timestamp.strftime("%Y-%m-%d %H:%M:%S"), round(price, 2) if price is not None else "NaN"])
 
-    print(f"Price is saved: {price} under {filepath}")
+    print(f"📈 Zapisano cenę: {price} do {filepath}")
+
 
 
 def summarize_logs(log_path="logs/actions_log.csv", summary_dir="summary"):
@@ -87,7 +88,7 @@ def summarize_logs(log_path="logs/actions_log.csv", summary_dir="summary"):
     print(f"Summary is saved under: {filename}")
 
 
-def log_minute_action(timestamp, action, suggestion, comment, price, fee, btc_amount, capital, profit):
+def log_minute_action(timestamp, action, suggestion, comment, price, fee, btc_amount, capital, profit, executor_thoughts, advisor_thoughts):
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
     date_str = timestamp.strftime("%Y-%m-%d")
@@ -97,11 +98,12 @@ def log_minute_action(timestamp, action, suggestion, comment, price, fee, btc_am
     with open(filepath, mode="a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["timestamp", "executor_action", "advisor_suggestion", "comment", "price", "fee", "btc", "capital", "net_profit"])
+            writer.writerow(["timestamp", "executor_action", "advisor_suggestion", "comment", "price", "fee", "btc", "capital", "net_profit", "executor_thoughts", "advisor_thoughts"])
         writer.writerow([
             timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             action, suggestion, comment,
-            round(price, 2), round(fee, 2), round(btc_amount, 6), round(capital, 2), round(profit, 2)
+            round(price, 2), round(fee, 2), round(btc_amount, 6), round(capital, 2), round(profit, 2),
+            executor_thoughts, advisor_thoughts
         ])
 
 
@@ -113,7 +115,7 @@ def main():
     price_history = []
     start_time = datetime.now()
 
-    print("Simulation LIVE just started...")
+    print("🔁 Symulacja LIVE wystartowała...")
     while True:
         price = get_live_price()
         now = datetime.now()
@@ -132,12 +134,16 @@ def main():
             previous_position = executor.position
             previous_capital = executor.capital
 
+            executor_thoughts = f"Monitoring position. Capital: {executor.capital:.2f} EUR"
+            advisor_thoughts = f"Advisor suggests: {suggestion.upper()} based on trend"
+
             executor.decide(price, now.strftime("%Y-%m-%d %H:%M:%S"), suggestion, comment)
 
             if executor.position == previous_position and executor.capital == previous_capital:
                 log_minute_action(
-                    now, "NONE", suggestion, "No action done - further analysis needed. ",
-                    price, 0.0, executor.position, executor.capital, executor.estimate_net_profit(price)
+                    now, "NONE", suggestion, "Brak akcji – obserwacja rynku",
+                    price, 0.0, executor.position, executor.capital, executor.estimate_net_profit(price),
+                    executor_thoughts, advisor_thoughts
                 )
 
             global last_logged_hour
