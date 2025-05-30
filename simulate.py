@@ -51,7 +51,7 @@ def log_price_to_file(timestamp, price, data_dir="data"):
             writer.writerow(["timestamp", "price"])
         writer.writerow([timestamp.strftime("%Y-%m-%d %H:%M:%S"), round(price, 2) if price is not None else "NaN"])
 
-    print(f"📈 Zapisano cenę: {price} do {filepath}")
+    print(f" Price is saved: {price} under {filepath}")
 
 
 
@@ -62,7 +62,8 @@ def summarize_logs(log_path="logs/actions_log.csv", summary_dir="summary"):
 
     os.makedirs(summary_dir, exist_ok=True)
 
-    df = pd.read_csv(log_path)
+    df = pd.read_csv("logs/actions_log_2025-05-30.csv", encoding="utf-8-sig")
+
 
     total_fee = df["fee"].sum()
     total_profit = df["net_profit"].sum()
@@ -115,7 +116,7 @@ def main():
     price_history = []
     start_time = datetime.now()
 
-    print("🔁 Symulacja LIVE wystartowała...")
+    print("Simulation LIVE just started...")
     while True:
         price = get_live_price()
         now = datetime.now()
@@ -141,7 +142,7 @@ def main():
 
             if executor.position == previous_position and executor.capital == previous_capital:
                 log_minute_action(
-                    now, "NONE", suggestion, "Brak akcji – obserwacja rynku",
+                    now, "NONE", suggestion, "No action - more observations needed",
                     price, 0.0, executor.position, executor.capital, executor.estimate_net_profit(price),
                     executor_thoughts, advisor_thoughts
                 )
